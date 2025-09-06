@@ -48,3 +48,16 @@ export function validarCPF(cpf: string): boolean {
   
     return true;
   }
+
+
+// NOVA FUNÇÃO DE FORMATAÇÃO:
+// Recebe "12345678900" e retorna "123.456.789-00"
+export function formatarCPF(cpfLimpo: string): string {
+  if (typeof cpfLimpo !== 'string' || cpfLimpo.length !== 11 || !/^\d+$/.test(cpfLimpo)) {
+     // Se não for uma string de 11 dígitos, retorne o original (ou uma msg de erro)
+     return cpfLimpo; 
+  }
+
+  // Aplica a máscara de formatação usando Regex
+  return cpfLimpo.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}

@@ -1,49 +1,112 @@
 "use client";
 import React, { useState } from "react";
 import { Box, Container, TextField, Button, Typography } from "@mui/material";
-import CpfMaskAdapter from "../components/CpfMaskAdapter"; // Importando o TSX
+import CpfMaskAdapter from "../components/CpfMaskAdapter";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import ResponsiveAppBar from "../components/AppBar";
-import { validarCPF } from "../lib/utils"; // Importando o TS
+import { validarCPF } from "../lib/utils";
+
+// --- IMPORTS ATUALIZADOS DO FIREBASE ---
+import { db } from "../lib/firebase";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  increment,
+} from "firebase/firestore";
 
 export default function AddPointsPage() {
-
   const [cpf, setCpf] = useState("");
   const [pontos, setPontos] = useState("");
   const [cpfError, setCpfError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [apiResponse, setApiResponse] = useState<string>(""); // Bônus: estado para resposta da API
+  const [nome, setNome] = useState("");
+  // const [apiResponse, setApiResponse] = useState<string>(""); // REMOVIDO
 
-  const handleAdicionarPontos = async () => { // Recomendado: transformar em async
-    
-    // A validação de CPF já foi feita no onChange, mas checamos de novo
+const handleAdicionarPontos = async () => {
     if (!!cpfError || !cpf || !pontos) {
       alert("Formulário inválido. Verifique o CPF e os pontos.");
       return;
     }
-    
+
     setIsLoading(true);
-    setApiResponse(""); // Limpa respostas antigas
+    
+    const cpfLimpo = cpf.replace(/\D/g, "");
+    const pontosParaAdd = parseInt(pontos, 10);
+    const nomeLimpo = nome.trim();
 
-    // Lógica real da API (substituindo o alert)
     try {
-      const cpfLimpo = cpf.replace(/\D/g, ""); // Envia só os números
-      
-      // Simulação de chamada de API (substitua pelo seu fetch)
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Sucesso (simulado)
-      console.log("Enviando:", { cpf: cpfLimpo, pontos: parseInt(pontos) });
-      setApiResponse(`Sucesso! ${pontos} pontos adicionados ao CPF ${cpf}.`);
+      const clientesRef = collection(db, "clientes");
+      const q = query(clientesRef, where("cpf", "==", cpfLimpo));
+      const querySnapshot = await getDocs(q);
 
-      // Limpar campos
+      if (querySnapshot.empty) {
+        // --- LÓGICA A: NOVO CLIENTE ---
+        const payloadNovoCliente: any = {
+          cpf: cpfLimpo,
+          ultimoCpfUtilizado: cpf, 
+          pontos: pontosParaAdd, 
+          criadoEm: new Date(),
+          ultimaAtualizacao: new Date(),
+        };
+        
+        if (nomeLimpo !== "") {
+          payloadNovoCliente.nome = nomeLimpo;
+        }
+
+        await addDoc(clientesRef, payloadNovoCliente);
+        
+        // --- ALERTA ATUALIZADO (NOVO CLIENTE) ---
+        // Prioriza o nome digitado; se vazio, usa o CPF formatado como fallback.
+        const nomeExibicao = nomeLimpo || `Cliente CPF ${cpf}`;
+        alert(
+          `Sucesso! ${pontosParaAdd} pontos adicionados para: ${nomeExibicao}.`
+        );
+
+      } else {
+        // --- LÓGICA B: CLIENTE EXISTENTE ---
+        const clienteDoc = querySnapshot.docs[0];
+        const dadosCliente = clienteDoc.data(); // Pegamos os dados existentes
+
+        const updatePayload: any = {
+          pontos: increment(pontosParaAdd), 
+          ultimaAtualizacao: new Date(),
+          ultimoCpfUtilizado: cpf, 
+        };
+
+        if (nomeLimpo !== "") {
+          updatePayload.nome = nomeLimpo;
+        }
+
+        await updateDoc(clienteDoc.ref, updatePayload);
+        
+        // --- ALERTA ATUALIZADO (CLIENTE EXISTENTE) ---
+        // Prioriza: 1. Nome recém-digitado, OU 2. Nome já existente no DB, OU 3. CPF formatado.
+        const nomeExibicao = nomeLimpo || dadosCliente.nome || `Cliente CPF ${cpf}`;
+        alert(
+          `Sucesso! ${pontosParaAdd} pontos adicionados para: ${nomeExibicao}.`
+        );
+      }
+
+      // Limpar campos em ambos os casos (Sucesso)
       setCpf("");
       setPontos("");
+      setNome("");
 
     } catch (error: any) {
-      console.error(error);
-      setApiResponse(`Erro: ${error.message || "Não foi possível adicionar os pontos."}`);
-      setCpfError("Erro na API."); // Indica um erro geral
+      console.error("ERRO NA OPERAÇÃO DO FIRESTORE:", error);
+
+      // (Alertas de erro permanecem os mesmos, pois não mostram ID ou nome)
+      if (error.code === "failed-precondition") {
+        alert(
+          "Erro: O banco de dados precisa de um índice. Verifique o console do navegador para o link de criação."
+        );
+      } else {
+        alert(`Erro: Falha na operação. ${error.message}`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -52,7 +115,7 @@ export default function AddPointsPage() {
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const novoCpf = e.target.value;
     setCpf(novoCpf);
-    setApiResponse(""); // Limpa a resposta da API ao digitar de novo
+    // setApiResponse(""); // REMOVIDO
 
     if (novoCpf.length === 0) {
       setCpfError("");
@@ -63,7 +126,6 @@ export default function AddPointsPage() {
         setCpfError("CPF inválido.");
       }
     } else {
-      // Limpa o erro ENQUANTO digita
       setCpfError("");
     }
   };
@@ -76,7 +138,16 @@ export default function AddPointsPage() {
           <Typography variant="h4" component="h1" gutterBottom>
             Registrar Pontos do Cliente 🪙
           </Typography>
-          
+
+          <TextField
+            fullWidth
+            variant="outlined"
+            label="Nome do Cliente (Opcional)"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            helperText="O nome só é salvo/atualizado se preenchido."
+          />
+
           <TextField
             fullWidth
             variant="outlined"
@@ -87,10 +158,10 @@ export default function AddPointsPage() {
             name="cpf-input"
             id="cpf-mask-input"
             InputProps={{
-              inputComponent: CpfMaskAdapter as any, // Este 'as any' é pragmático e aceitável aqui
+              inputComponent: CpfMaskAdapter as any,
             }}
             error={!!cpfError}
-            helperText={cpfError || " "} // Use " " para manter a altura do layout
+            helperText={cpfError || " "}
           />
 
           <TextField
@@ -101,10 +172,10 @@ export default function AddPointsPage() {
             InputProps={{ inputProps: { min: 1 } }}
             value={pontos}
             onChange={(e) => {
-                setPontos(e.target.value);
-                setApiResponse(""); // Limpa resposta ao digitar
+              setPontos(e.target.value);
+              // setApiResponse(""); // REMOVIDO
             }}
-            helperText=" " // Mantém o layout alinhado com o helperText do CPF
+            helperText=" "
           />
 
           <Button
@@ -116,16 +187,10 @@ export default function AddPointsPage() {
             onClick={handleAdicionarPontos}
             disabled={!cpf || !pontos || isLoading || !!cpfError}
           >
-            {isLoading ? "Adicionando..." : "Adicionar Pontos"}
+            {isLoading ? "Salvando..." : "Adicionar Pontos"}
           </Button>
 
-          {/* Feedback da API */}
-          {apiResponse && (
-            <Typography color={apiResponse.startsWith("Erro:") ? "error" : "primary"}>
-                {apiResponse}
-            </Typography>
-          )}
-
+          {/* Feedback da API (BLOCO INTEIRO REMOVIDO) */}
         </Box>
       </Container>
     </>
