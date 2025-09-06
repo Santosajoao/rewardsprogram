@@ -1,5 +1,6 @@
 import "./globals.css";
-
+import AppBar from "@/components/AppBar";
+import React from "react";
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -7,7 +8,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>
+      <body cz-shortcut-listen="true">
+        <AppBar />
         {children}
       </body>
     </html>
