@@ -132,7 +132,7 @@ const handleAdicionarPontos = async () => {
 
   return (
     <>
-      <ResponsiveAppBar />
+     
       <Container maxWidth="sm" sx={{ mt: 8 }}>
         <Box display="flex" flexDirection="column" alignItems="center" gap={3}>
           <Typography variant="h4" component="h1" gutterBottom>

@@ -70,7 +70,7 @@ export default function ClientesPage() {
 
   return (
     <>
-      <ResponsiveAppBar />
+      
       <Container maxWidth="md" sx={{ mt: 8 }}>
         <Box display="flex" flexDirection="column" alignItems="center" gap={3}>
           
@@ -88,7 +88,7 @@ export default function ClientesPage() {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{fontWeight: 'bold'}}>Nome</TableCell>
-                      <TableCell sx={{fontWeight: 'bold'}}>CPF (Formatado)</TableCell>
+                      <TableCell sx={{fontWeight: 'bold'}}>CPF</TableCell>
                       <TableCell align="right" sx={{fontWeight: 'bold'}}>Pontos</TableCell>
                     </TableRow>
                   </TableHead>
