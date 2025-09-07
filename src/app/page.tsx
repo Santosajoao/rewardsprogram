@@ -4,8 +4,6 @@ import { Box, Container, TextField, Button, Typography } from "@mui/material";
 import CpfMaskAdapter from "../components/CpfMaskAdapter";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import { validarCPF } from "../lib/utils";
-
-// --- IMPORTS ATUALIZADOS DO FIREBASE ---
 import { db } from "../lib/firebase";
 import {
   collection,
@@ -57,16 +55,13 @@ const handleAdicionarPontos = async () => {
         }
 
         await addDoc(clientesRef, payloadNovoCliente);
-        
-        // --- ALERTA ATUALIZADO (NOVO CLIENTE) ---
-        // Prioriza o nome digitado; se vazio, usa o CPF formatado como fallback.
+      
         const nomeExibicao = nomeLimpo || `Cliente CPF ${cpf}`;
         alert(
           `Sucesso! ${pontosParaAdd} pontos adicionados para: ${nomeExibicao}.`
         );
 
       } else {
-        // --- LÓGICA B: CLIENTE EXISTENTE ---
         const clienteDoc = querySnapshot.docs[0];
         const dadosCliente = clienteDoc.data(); // Pegamos os dados existentes
 
@@ -81,8 +76,7 @@ const handleAdicionarPontos = async () => {
         }
 
         await updateDoc(clienteDoc.ref, updatePayload);
-        
-        // --- ALERTA ATUALIZADO (CLIENTE EXISTENTE) ---
+      
         // Prioriza: 1. Nome recém-digitado, OU 2. Nome já existente no DB, OU 3. CPF formatado.
         const nomeExibicao = nomeLimpo || dadosCliente.nome || `Cliente CPF ${cpf}`;
         alert(
@@ -114,8 +108,7 @@ const handleAdicionarPontos = async () => {
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const novoCpf = e.target.value;
     setCpf(novoCpf);
-    // setApiResponse(""); // REMOVIDO
-
+    
     if (novoCpf.length === 0) {
       setCpfError("");
     } else if (novoCpf.length === 14) {

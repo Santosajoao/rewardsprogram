@@ -12,7 +12,8 @@ import {
   TableRow,
   TableCell,
   CircularProgress,
-  TextField, // NOVO: Importar o campo de texto para a busca
+  TextField,
+  IconButton, // NOVO: Para tornar o ícone um botão clicável
 } from "@mui/material";
 import { formatarCPF } from "../../lib/utils";
 import { db } from "../../lib/firebase";
@@ -23,6 +24,8 @@ import {
   QuerySnapshot,
   DocumentData,
 } from "firebase/firestore";
+import EditIcon from "@mui/icons-material/Edit";
+import BasicModal from "../../components/Modal"; // Este componente já estava importado
 
 interface Cliente {
   id: string;
@@ -34,9 +37,15 @@ interface Cliente {
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [filtroCpf, setFiltroCpf] = useState(""); // NOVO: Estado para guardar o valor da search bar
+  const [filtroCpf, setFiltroCpf] = useState("");
 
-  // Este useEffect (busca de dados) permanece O MESMO.
+  // --- NOVOS ESTADOS PARA O MODAL ---
+  const [modalOpen, setModalOpen] = useState(false);
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(
+    null
+  );
+
+  // useEffect (busca de dados) - SEM ALTERAÇÕES
   useEffect(() => {
     const q = query(collection(db, "clientes"));
     const unsubscribe = onSnapshot(q, (querySnapshot: QuerySnapshot) => {
@@ -46,52 +55,57 @@ export default function ClientesPage() {
         clientesData.push({
           id: doc.id,
           nome: data.nome || "Nome não cadastrado",
-          // MODIFICADO: Corrigindo para usar o campo 'cpf' vindo do banco para formatar
-          ultimoCpfUtilizado: data.cpf
-            ? data.cpf
-            : "CPF não disponível",
+          ultimoCpfUtilizado: data.cpf ? data.cpf : "CPF não disponível",
           pontos: data.pontos || 0,
         });
       });
-
       clientesData.sort((a, b) => b.pontos - a.pontos);
-
       setClientes(clientesData);
       setIsLoading(false);
     });
-
     return () => unsubscribe();
   }, []);
 
-  // NOVO: Lógica de filtragem
-  // Criamos uma lista derivada baseada no estado 'clientes' e no estado 'filtroCpf'
+  // --- NOVAS FUNÇÕES PARA CONTROLAR O MODAL ---
+
+  /** Abre o modal e define qual cliente está sendo editado */
+  const handleOpenModal = (cliente: Cliente) => {
+    setClienteSelecionado(cliente);
+    setModalOpen(true);
+  };
+
+  /** Fecha o modal e limpa o cliente selecionado */
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    setClienteSelecionado(null);
+  };
+
+  // Lógica de filtragem - SEM ALTERAÇÕES
   const clientesFiltrados =
     filtroCpf.trim() === ""
-      ? clientes // Se o filtro estiver vazio, mostra todos os clientes
+      ? clientes
       : clientes.filter(
           (cliente) =>
-            // Verifica se o texto do filtro existe no CPF formatado OU no ID (CPF limpo)
             cliente.ultimoCpfUtilizado.includes(filtroCpf) ||
             cliente.id.includes(filtroCpf)
         );
 
   return (
     <>
-      {/* <ResponsiveAppBar />  // Removi da resposta para focar, mas mantenha o seu. */}
       <Container maxWidth="md" sx={{ mt: 8 }}>
         <Box display="flex" flexDirection="column" alignItems="center" gap={3}>
           <Typography variant="h4" component="h1" gutterBottom>
             Ranking de Clientes 🏆
           </Typography>
 
-          {/* NOVO: Campo de busca (Search Bar) */}
           <TextField
+            // ...props do textfield (sem alterações)
             label="Buscar por CPF"
             variant="outlined"
             fullWidth
             value={filtroCpf}
             onChange={(e) => setFiltroCpf(e.target.value)}
-            sx={{ mb: 2 }} // Adiciona um espaço abaixo do campo
+            sx={{ mb: 2 }}
           />
 
           {isLoading ? (
@@ -107,11 +121,11 @@ export default function ClientesPage() {
                       <TableCell align="right" sx={{ fontWeight: "bold" }}>
                         Pontos
                       </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Editar</TableCell>
                     </TableRow>
                   </TableHead>
 
                   <TableBody>
-                    {/* MODIFICADO: Trocamos 'clientes.map' por 'clientesFiltrados.map' */}
                     {clientesFiltrados.map((cliente) => (
                       <TableRow
                         key={cliente.id}
@@ -122,8 +136,15 @@ export default function ClientesPage() {
                         <TableCell component="th" scope="row">
                           {cliente.nome}
                         </TableCell>
-                        <TableCell>{formatarCPF(cliente.ultimoCpfUtilizado)}</TableCell>
+                        <TableCell>
+                          {formatarCPF(cliente.ultimoCpfUtilizado)}
+                        </TableCell>
                         <TableCell align="right">{cliente.pontos}</TableCell>
+                        <TableCell align="right">
+                          <IconButton onClick={() => handleOpenModal(cliente)}>
+                            <EditIcon color="inherit" />
+                          </IconButton>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -132,6 +153,28 @@ export default function ClientesPage() {
             </Paper>
           )}
         </Box>
+
+        {/* NOVO: Renderização condicional do Modal.
+          Ele só renderiza se o modalOpen for true E tivermos um cliente selecionado.
+        */}
+        {modalOpen && clienteSelecionado && (
+          <BasicModal
+            open={modalOpen}
+            onClose={handleCloseModal} // Passando a função de fechar
+            // O conteúdo do modal é definido aqui
+          >
+            <Typography id="modal-modal-title" variant="h6" component="h2">
+              Editar Cliente
+            </Typography>
+            <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+              Nome: {clienteSelecionado.nome}
+              <br />
+              CPF: {formatarCPF(clienteSelecionado.ultimoCpfUtilizado)}
+              <br />
+              Pontos: {clienteSelecionado.pontos}
+            </Typography>
+          </BasicModal>
+        )}
       </Container>
     </>
   );

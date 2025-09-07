@@ -13,7 +13,7 @@ import Button from "@mui/material/Button";
 import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import AdbIcon from "@mui/icons-material/Adb";
-import Link from "next/link"; // <-- ADICIONE ESTA LINHA
+import Link from "next/link";
 
 const pages = ["Clientes", "Recompensas", "Suporte"];
 const settings = ["Profile", "Account", "Dashboard", "Logout"];
@@ -96,7 +96,7 @@ function ResponsiveAppBar() {
                   key={page}
                   component={Link} // 1. Diz ao MUI para usar o Link
                   href={`/${page.toLowerCase()}`} // 2. Define o destino (ex: /clientes, /recompensas)
-                  sx={{ my: 2, color: "white", display: "block" }}
+                  sx={{ my: 2, color: "black", display: "block" }}
                 >
                   {page}
                 </Button>
