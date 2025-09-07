@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Box, Container, TextField, Button, Typography } from "@mui/material";
 import CpfMaskAdapter from "../components/CpfMaskAdapter";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import ResponsiveAppBar from "../components/AppBar";
 import { validarCPF } from "../lib/utils";
 
 // --- IMPORTS ATUALIZADOS DO FIREBASE ---

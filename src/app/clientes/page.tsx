@@ -14,7 +14,6 @@ import {
   CircularProgress,
   TextField, // NOVO: Importar o campo de texto para a busca
 } from "@mui/material";
-import ResponsiveAppBar from "../../components/AppBar";
 import { formatarCPF } from "../../lib/utils";
 import { db } from "../../lib/firebase";
 import {
