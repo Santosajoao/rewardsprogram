@@ -4,7 +4,7 @@ import Modal from "@mui/material/Modal";
 // Imports de Button e Typography removidos, pois o 'children' cuidará disso.
 
 const style = {
-  position: "absolute" as "absolute", // Adicionado 'as' para tipagem mais estrita do TS
+  position: "absolute",// Adicionado 'as' para tipagem mais estrita do TS
   top: "50%",
   left: "50%",
   transform: "translate(-50%, -50%)",
