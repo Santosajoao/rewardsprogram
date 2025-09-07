@@ -1,7 +1,6 @@
 // Caminho: lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
 import {
-  getFirestore,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
