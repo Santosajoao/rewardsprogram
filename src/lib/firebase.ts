@@ -1,6 +1,11 @@
 // Caminho: lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from "firebase/firestore";
 // Você também pode importar outros serviços aqui (Auth, Storage, etc.)
 
 // Seu objeto de configuração lendo as variáveis de ambiente
@@ -18,6 +23,11 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Exporta as instâncias dos serviços que você precisa
-const db = getFirestore(app);
-
+const db = initializeFirestore(app, {
+  // Isso ativa o cache local (IndexedDB)
+  localCache: persistentLocalCache({
+    // Isso permite que o cache funcione corretamente mesmo com múltiplas abas abertas
+    tabManager: persistentMultipleTabManager()
+  })
+});
 export { app, db };
