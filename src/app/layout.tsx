@@ -1,6 +1,7 @@
 import "./globals.css";
 import AppBar from "@/components/AppBar";
 import React from "react";
+import ThemeRegistry from "../components/ThemeRegistry"; // Importe o registro
 import type { Metadata } from "next";
 
 // Adicione isso:
@@ -22,8 +23,10 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body cz-shortcut-listen="true">
-        <AppBar />
-        {children}
+        <ThemeRegistry>
+          <AppBar />
+          {children}
+        </ThemeRegistry>
       </body>
     </html>
   );
