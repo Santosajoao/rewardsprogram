@@ -121,7 +121,7 @@ export default function ClientesPage() {
                       <TableCell align="right" sx={{ fontWeight: "bold" }}>
                         Pontos
                       </TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>Editar</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }} align="right">Editar</TableCell>
                     </TableRow>
                   </TableHead>
 
