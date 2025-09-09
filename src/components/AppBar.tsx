@@ -16,7 +16,26 @@ import Link from "next/link";
 import WhatshotIcon from "@mui/icons-material/Whatshot";
 
 const pages = ["Clientes", "Recompensas", "Suporte"];
-const settings = ["Profile", "Account", "Dashboard", "Logout"];
+const settings = ["Meu perfil", "Account", "Dashboard", "Logout"];
+
+//vou fazer uma função para levar a página correta
+//se for seetings[0] leva a /meu-perfil
+
+function handleMenuClick(setting: string) {
+  switch (setting) {
+    case "Meu perfil":
+      return "/meu-perfil";
+    case "Account":
+      return "/account";
+    case "Dashboard":
+      return "/dashboard";
+    case "Logout":
+      return "/logout";
+    default:
+      return "/";
+  }
+}
+
 
 function ResponsiveAppBar() {
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
@@ -157,7 +176,7 @@ function ResponsiveAppBar() {
             >
               {settings.map((setting) => (
                 <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography sx={{ textAlign: "center" }}>
+                  <Typography sx={{ textAlign: "center" }} href={handleMenuClick(setting)} component={Link}>
                     {setting}
                   </Typography>
                 </MenuItem>
