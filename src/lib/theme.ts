@@ -54,7 +54,7 @@ const theme = createTheme({
   // As suas cores personalizadas permanecem as mesmas
   palette: {
     primary: {
-      main: '#1976d2',
+      main: '#e85100',
     },
     secondary: {
       main: '#dc004e',
