@@ -32,6 +32,7 @@ interface Cliente {
   nome: string;
   ultimoCpfUtilizado: string;
   pontos: number;
+  telefone?: string; // NOVO: Campo opcional para telefone
 }
 
 export default function ClientesPage() {
@@ -57,6 +58,7 @@ export default function ClientesPage() {
           nome: data.nome || "Nome não cadastrado",
           ultimoCpfUtilizado: data.cpf ? data.cpf : "CPF não disponível",
           pontos: data.pontos || 0,
+          telefone: data.telefone || "Telefone não cadastrado", // NOVO: Adiciona o telefone
         });
       });
       clientesData.sort((a, b) => b.pontos - a.pontos);
@@ -118,9 +120,10 @@ export default function ClientesPage() {
                     <TableRow>
                       <TableCell sx={{ fontWeight: "bold" }}>Nome</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>CPF</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                      <TableCell align="center" sx={{ fontWeight: "bold" }}>
                         Pontos
                       </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }} align="center">Contato</TableCell>
                       <TableCell sx={{ fontWeight: "bold" }} align="right">Editar</TableCell>
                     </TableRow>
                   </TableHead>
@@ -139,7 +142,8 @@ export default function ClientesPage() {
                         <TableCell>
                           {formatarCPF(cliente.ultimoCpfUtilizado)}
                         </TableCell>
-                        <TableCell align="right">{cliente.pontos}</TableCell>
+                        <TableCell align="center">{cliente.pontos}</TableCell>
+                        <TableCell align="center">{cliente.telefone}</TableCell>
                         <TableCell align="right">
                           <IconButton onClick={() => handleOpenModal(cliente)}>
                             <EditIcon color="inherit" />
