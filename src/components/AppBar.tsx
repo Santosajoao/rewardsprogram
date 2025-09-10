@@ -14,30 +14,25 @@ import Tooltip from "@mui/material/Tooltip";
 import MenuItem from "@mui/material/MenuItem";
 import Link from "next/link";
 import WhatshotIcon from "@mui/icons-material/Whatshot";
+// NOVO: Importar 'useRouter' para o redirecionamento
+import { useRouter } from "next/navigation";
+// NOVO: Importar as funcionalidades de autenticação do Firebase
+import { onAuthStateChanged, signOut, User } from "firebase/auth";
+// MODIFICADO: Corrigido o caminho de importação para ser relativo
+import { auth } from "../lib/firebase";
 
-const pages = ["Clientes", "Recompensas", "Suporte"];
-const settings = ["Meu perfil", "Account", "Dashboard", "Logout"];
-
-//vou fazer uma função para levar a página correta
-//se for seetings[0] leva a /meu-perfil
-
-function handleMenuClick(setting: string) {
-  switch (setting) {
-    case "Meu perfil":
-      return "/meu-perfil";
-    case "Account":
-      return "/account";
-    case "Dashboard":
-      return "/dashboard";
-    case "Logout":
-      return "/logout";
-    default:
-      return "/";
-  }
-}
-
+// Definimos os links fora do componente para maior clareza
+const pages = [
+  { name: "Clientes", path: "/clientes" },
+];
+const settings = [
+  { name: "Meu perfil", path: "/perfil/editar" },
+  { name: "Logout", path: "#" }, // O path '#' indica que é uma ação
+];
 
 function ResponsiveAppBar() {
+  const [user, setUser] = React.useState<User | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const [anchorElNav, setAnchorElNav] = React.useState<null | HTMLElement>(
     null
   );
@@ -45,93 +40,58 @@ function ResponsiveAppBar() {
     null
   );
 
+  // NOVO: Inicializar o router para o redirecionamento
+  const router = useRouter();
+
+  React.useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const handleOpenNavMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElNav(event.currentTarget);
   };
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorElUser(event.currentTarget);
   };
-
   const handleCloseNavMenu = () => {
     setAnchorElNav(null);
   };
-
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
 
+  // NOVO: Função para lidar especificamente com o logout
+  const handleLogout = async () => {
+    handleCloseUserMenu(); // Fecha o menu
+    try {
+      await signOut(auth); // Termina a sessão no Firebase
+      router.push("/"); // Redireciona para a página inicial
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
+  };
+
+  if (loading) {
+    return null;
+  }
+
   return (
     <AppBar position="static">
       <Container maxWidth="xl">
-        <Toolbar disableGutters color="primary">
+        <Toolbar disableGutters>
           <WhatshotIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} />
           <Typography
             variant="h6"
             noWrap
-            component="a"
-            href="/"
+            component={Link}
+            href="/home"
             sx={{
               mr: 2,
               display: { xs: "none", md: "flex" },
-              fontWeight: 700,
-              letterSpacing: ".3rem",
-              color: "primary",
-              textDecoration: "none",
-            }}
-          >
-            BRASEAR
-          </Typography>
-
-          <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
-            <IconButton
-              size="large"
-              aria-label="account of current user"
-              aria-controls="menu-appbar"
-              aria-haspopup="true"
-              onClick={handleOpenNavMenu}
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorElNav}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "left",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "left",
-              }}
-              open={Boolean(anchorElNav)}
-              onClose={handleCloseNavMenu}
-              sx={{ display: { xs: "block", md: "none" } }}
-            >
-              {pages.map((page) => (
-                <Button
-                  key={page}
-                  component={Link} // 1. Diz ao MUI para usar o Link
-                  href={`/${page.toLowerCase()}`} // 2. Define o destino (ex: /clientes, /recompensas)
-                  sx={{ my: 2, color: "black", display: "block" }}
-                >
-                  {page}
-                </Button>
-              ))}
-            </Menu>
-          </Box>
-          <WhatshotIcon sx={{ display: { xs: "flex", md: "none" }, mr: 1 }} />
-          <Typography
-            variant="h5"
-            noWrap
-            component="a"
-            href="/"
-            sx={{
-              mr: 2,
-              display: { xs: "flex", md: "none" },
-              flexGrow: 1,
-              fontFamily: "monospace",
               fontWeight: 700,
               letterSpacing: ".3rem",
               color: "inherit",
@@ -140,48 +100,119 @@ function ResponsiveAppBar() {
           >
             BRASEAR
           </Typography>
-          <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-            {pages.map((page) => (
-              <Button
-                key={page}
-                component={Link} // 1. Diz ao MUI para usar o Link
-                href={`/${page.toLowerCase()}`} // 2. Define o destino (ex: /clientes, /recompensas)
-                sx={{ my: 2, color: "white", display: "block" }}
+
+          {/* --- Menu Mobile (apenas para utilizadores autenticados) --- */}
+          {user && (
+            <Box sx={{ flexGrow: 1, display: { xs: "flex", md: "none" } }}>
+              <IconButton
+                size="large"
+                onClick={handleOpenNavMenu}
+                color="inherit"
               >
-                {page}
-              </Button>
-            ))}
-          </Box>
-          <Box sx={{ flexGrow: 0 }}>
-            <Tooltip title="Open settings">
-              <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                <Avatar alt="Remy Sharp" src="/static/images/avatar/2.jpg" />
+                <MenuIcon />
               </IconButton>
-            </Tooltip>
-            <Menu
-              sx={{ mt: "45px" }}
-              id="menu-appbar"
-              anchorEl={anchorElUser}
-              anchorOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-              open={Boolean(anchorElUser)}
-              onClose={handleCloseUserMenu}
-            >
-              {settings.map((setting) => (
-                <MenuItem key={setting} onClick={handleCloseUserMenu}>
-                  <Typography sx={{ textAlign: "center" }} href={handleMenuClick(setting)} component={Link}>
-                    {setting}
-                  </Typography>
-                </MenuItem>
+              <Menu
+                id="menu-appbar"
+                anchorEl={anchorElNav}
+                open={Boolean(anchorElNav)}
+                onClose={handleCloseNavMenu}
+                sx={{ display: { xs: "block", md: "none" } }}
+              >
+                {pages.map((page) => (
+                  <MenuItem
+                    key={page.name}
+                    onClick={handleCloseNavMenu}
+                    component={Link}
+                    href={page.path}
+                  >
+                    <Typography textAlign="center">{page.name}</Typography>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </Box>
+          )}
+
+          {/* --- Logo Mobile --- */}
+          <Typography
+            variant="h5"
+            noWrap
+            component={Link}
+            href="/home"
+            sx={{
+              mr: 2,
+              display: { xs: "flex", md: "none" },
+              flexGrow: 1,
+              fontWeight: 700,
+              letterSpacing: ".3rem",
+              color: "inherit",
+              textDecoration: "none",
+            }}
+          >
+            BRASEAR
+          </Typography>
+
+          {/* --- Menu Desktop (apenas para utilizadores autenticados) --- */}
+          {user && (
+            <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
+              {pages.map((page) => (
+                <Button
+                  key={page.name}
+                  component={Link}
+                  href={page.path}
+                  sx={{ my: 2, color: "white", display: "block" }}
+                >
+                  {page.name}
+                </Button>
               ))}
-            </Menu>
+            </Box>
+          )}
+
+          {/* --- Menu do Utilizador ou Botão de Login --- */}
+          <Box sx={{ flexGrow: 0 }}>
+            {user ? (
+              <>
+                <Tooltip title="Abrir configurações">
+                  <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
+                    <Avatar
+                      alt={user.displayName || ""}
+                      src={user.photoURL || ""}
+                    />
+                  </IconButton>
+                </Tooltip>
+                <Menu
+                  sx={{ mt: "45px" }}
+                  anchorEl={anchorElUser}
+                  open={Boolean(anchorElUser)}
+                  onClose={handleCloseUserMenu}
+                >
+                  {settings.map((setting) => (
+                    // MODIFICADO: A lógica de clique agora é diferente para o Logout
+                    <MenuItem
+                      key={setting.name}
+                      onClick={
+                        setting.name === "Logout"
+                          ? handleLogout
+                          : handleCloseUserMenu
+                      }
+                      component={setting.name !== "Logout" ? Link : "li"}
+                      href={setting.path}
+                    >
+                      <Typography textAlign="center">{setting.name}</Typography>
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </>
+            ) : (
+              // Se não houver utilizador, mostra o botão de Login
+              <Button
+                component={Link}
+                href="/login"
+                color="inherit"
+                variant="outlined"
+              >
+                Login
+              </Button>
+            )}
           </Box>
         </Toolbar>
       </Container>
