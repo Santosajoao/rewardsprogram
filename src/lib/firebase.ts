@@ -5,7 +5,9 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from "firebase/firestore";
-// Você também pode importar outros serviços aqui (Auth, Storage, etc.)
+import { getStorage } from "firebase/storage";
+// NOVO: Importar o getAuth
+import { getAuth } from "firebase/auth";
 
 // Seu objeto de configuração lendo as variáveis de ambiente
 const firebaseConfig = {
@@ -18,15 +20,20 @@ const firebaseConfig = {
 };
 
 // Inicializa o Firebase (padrão "Singleton" para Next.js)
-// Isso evita que o app seja inicializado múltiplas vezes no hot-reload (desenvolvimento)
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Exporta as instâncias dos serviços que você precisa
+// Inicializa e exporta a base de dados
 const db = initializeFirestore(app, {
-  // Isso ativa o cache local (IndexedDB)
   localCache: persistentLocalCache({
-    // Isso permite que o cache funcione corretamente mesmo com múltiplas abas abertas
-    tabManager: persistentMultipleTabManager()
-  })
+    tabManager: persistentMultipleTabManager(),
+  }),
 });
-export { app, db };
+
+// Inicializa o Storage
+const storage = getStorage(app);
+
+// NOVO: Inicializa a Autenticação
+const auth = getAuth(app);
+
+// Adiciona 'auth' à exportação
+export { app, db, storage, auth };
